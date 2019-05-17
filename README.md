@@ -1,14 +1,13 @@
-# Apache Zookeeper AMI
+# Apache Zookeeper VM
 
-AMI that should be used to create virtual machines with Apache Zookeeper
-installed.
+Virtual Machine (VM) package that should be used to create virtual machines with Apache Zookeeper installed.
 
 ## Synopsis
 
-This script will create an AMI with Apache Zookeeper installed and with all of
+This script will create an VM with Apache Zookeeper installed and with all of
 the required initialization scripts.
 
-The AMI resulting from this script should be the one used to instantiate a
+The VM resulting from this script should be the one used to instantiate a
 Zookeeper server (standalone or cluster).
 
 ## Getting Started
@@ -17,10 +16,8 @@ There are a couple of things needed for the script to work.
 
 ### Prerequisites
 
-Packer and AWS Command Line Interface tools need to be installed on your local
-computer.
-To build a base image you have to know the id of the latest Debian AMI files
-for the region where you wish to build the AMI.
+Packer and Gcloud and/or AWS Command Line Interface tools need to be installed on your local computer.
+To build a base image you have to know the id of the latest Debian AMI (AWS) or Google files for the region where you wish to build the AMI.
 
 #### Packer
 
@@ -33,18 +30,45 @@ AWS Command Line Interface installation instructions can be found [here](http://
 
 #### Debian AMI's
 
-This AMI will be based on an official Debian AMI. The latest version of that
-AMI will be used.
+This AMI will be based on an official Debian image. The latest version of that
+image will be used.
 
-A list of all the Debian AMI id's can be found at the Debian official page:
+A list of all the Debian AWS AMI id's can be found at the Debian official page:
 [Debian official Amazon EC2 Images](https://wiki.debian.org/Cloud/AmazonEC2Image/)
+
+For Google Cloud the list can be found [here](https://cloud.google.com/compute/docs/images).
 
 ### Usage
 
-In order to create the AMI using this packer template you need to provide a
+In order to create the image using this packer template you need to provide a
 few options.
 
+#### Google Cloud
+
+```bash
+Usage:
+  packer validate \
+    -var 'project_id=<GCP_PROJECT_ID>' \
+    -var 'machine_type=<MACHINE_TYPE>' \
+    -var 'zookeeper_version=<ZOOKEEPER_VERSION_VERSION>' \
+    -var 'option=value'] \
+    kafka.gcp.json
 ```
+
+For example: 
+
+```bash
+Usage:
+  packer validate \
+    -var 'project_id=primedio' \
+    -var 'machine_type=n1-standard-1' \
+    -var 'zookeeper_version=3.4.9' \
+    kafka.gcp.json
+```
+
+#### AWS
+
+```bash
 Usage:
   packer build \
     -var 'aws_access_key=AWS_ACCESS_KEY' \
@@ -56,6 +80,23 @@ Usage:
 ```
 
 #### Script Options
+
+##### GCP Config Options
+
+- `project_id` - *[required]* ID of the Google Cloud project.
+- `image_name` - VM package name (default value: "primed-zookeeper").
+- `image_name_prefix` - Prefix for the VM image name (default value: "").
+- `image_description` - Description of the image (default: "PrimedIO Zookeeper Machine Image").
+- `machine_type` - Machine type to use for the build (default: "n1-standard-1").
+- `source_image_family` - The default boot OS image (defaul: "debian-9").
+- `zone` = Zone were the build will be performed (default: europe-west4-a").
+- `region` - Region were the build will be performed (default: europe-west4").
+- `disk_size` - Size of the boot disk in Gb (default: "16").
+- `disk_type` - Type of disk (default: "pd-ssd").
+- `zookeeper_version` - *[required]* Zookeeper version.
+- `system_locale` - Locale for the system (default value: "en_US").
+
+##### AWS Config Options
 
 - `aws_access_key` - *[required]* The AWS access key.
 - `aws_ami_name` - The AMI name (default value: "zookeeper").
@@ -83,19 +124,19 @@ image. The script is called **zookeeper_config**.
 The script can and should be used to set some of the Zookeeper options as well
 as setting the Zookeeper service to start at boot.
 
-```
+```bash
 Usage: zookeeper_config [options]
 ```
 
 ##### Options
 
-* `-D` - Disables the Zookeeper service from start at boot time.
-* `-E` - Enables the Zookeeper service to start at boot time.
-* `-i <ID>` - Sets the Zookeeper broker ID (default value is '1').
-* `-m <MEMORY>` - Sets Zookeeper maximum heap size. Values should be provided following the same Java heap nomenclature.
-* `-n <ID:ADDRESS>` - The ID and Address of a cluster node (e.g.: '1:127.0.0.1'). Should be used to set all the Zookeeper nodes. Several Zookeeper nodes can be set by either using extra `-n` options or if separated with a comma on the same `-n` option.
-* `-S` - Starts the Zookeeper service after performing the required configurations (if any given).
-* `-W <SECONDS>` - Waits the specified amount of seconds before starting the Zookeeper service (default value is '0').
+- `-D` - Disables the Zookeeper service from start at boot time.
+- `-E` - Enables the Zookeeper service to start at boot time.
+- `-i <ID>` - Sets the Zookeeper broker ID (default value is '1').
+- `-m <MEMORY>` - Sets Zookeeper maximum heap size. Values should be provided following the same Java heap nomenclature.
+- `-n <ID:ADDRESS>` - The ID and Address of a cluster node (e.g.: '1:127.0.0.1'). Should be used to set all the Zookeeper nodes. Several Zookeeper nodes can be set by either using extra `-n` options or if separated with a comma on the same `-n` option.
+- `-S` - Starts the Zookeeper service after performing the required configurations (if any given).
+- `-W <SECONDS>` - Waits the specified amount of seconds before starting the Zookeeper service (default value is '0').
 
 #### Configuring a Zookeeper Node
 
@@ -104,7 +145,7 @@ be performed.
 
 Run the configuration tool (*zookeeper_config*) to configure the instance.
 
-```
+```bash
 zookeeper_config -E -S
 ```
 
@@ -115,7 +156,7 @@ For a cluster with more than one Zookeeper node other options have to be
 configured on each instance using the same configuration tool
 (*zookeeper_config*).
 
-```
+```bash
 zookeeper_config -E -i 1 -n 1:zookeeper01.mydomain.tld -n 2:zookeeper02.mydomain.tld,3:zookeeper03.mydomain.tld -S
 ```
 
@@ -151,13 +192,14 @@ to contribute to this project.
 ## Versioning
 
 This project uses [SemVer](http://semver.org/) for versioning. For the versions
-available, see the [tags on this repository](https://github.com/fscm/packer-aws-zookeeper/tags).
+available, see the [tags on this repository](https://github.com/primedio/packer-zookeeper/tags).
 
 ## Authors
 
-* **Frederico Martins** - [fscm](https://github.com/fscm)
+- **Rene Nederhand** - [primedio](https://github.com/primedio)
+- **Frederico Martins** - [fscm](https://github.com/fscm)
 
-See also the list of [contributors](https://github.com/fscm/packer-aws-zookeeper/contributors)
+See also the list of [contributors](https://github.com/packer-zookeeper/contributors)
 who participated in this project.
 
 ## License
